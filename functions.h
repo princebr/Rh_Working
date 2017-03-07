@@ -56,6 +56,8 @@ struct SW {
 struct SW neu_usw;
 struct SW lay_usw;
 struct SW cap_rl_btn;
+struct SW cap_attd;
+struct SW cap_dnd;
 //--------------------------------------
 
 

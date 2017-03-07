@@ -61,7 +61,10 @@ uint8_t init_bcm(void)
 		bcm2835_gpio_ren(CAP_RL_BTN);	// Rising edge detect
 		bcm2835_gpio_set_eds(CAP_RL);
 		bcm2835_gpio_set_eds(CAP_RL_BTN);
-		
+		bcm2835_gpio_len(CAP_DND);
+		bcm2835_gpio_set_eds(CAP_DND);
+		bcm2835_gpio_len(CAP_ATTD);
+		bcm2835_gpio_set_eds(CAP_ATTD);
 		
 		// Set Relay I/O to outputs
 		bcm2835_gpio_fsel(TTL_SW, BCM2835_GPIO_FSEL_OUTP);
@@ -149,6 +152,14 @@ void set_initial_conditions(void)
 	// Clear CAP_RL_BTN states
 	cap_rl_btn.next_state = 0;
 	cap_rl_btn.prev_state = 0;
+	
+	// Clear CAP ATTD states
+	cap_attd.next_state = 0;
+	cap_attd.prev_state = 0;
+	
+	// Clear CAP DND states
+	cap_dnd.next_state = 0;
+	cap_dnd.prev_state = 0;
 		
 	printf("RL State: %d\n", readingLight.mode);
 	//***********************************/
@@ -380,7 +391,8 @@ void svc_LAY_usw(void)
 	{
 		printf("LAY uSW \n");
 		
-		// dim lighting
+		// dim lighting..................
+		
 		// unmute audio
 		bcm2835_gpio_write(MUTE, LOW);
 	}
@@ -397,17 +409,24 @@ void svc_LAY_usw(void)
 
 void svc_ATTD_btn(void)
 {
-	if (!bcm2835_gpio_lev(CAP_ATTD)) {
-		printf("State: %d\n", capATTDWhiteLight.state);
-		if (capATTDWhiteLight.state == WHITE) {
+	// Capture btn state
+	cap_attd.next_state = !bcm2835_gpio_lev(CAP_ATTD);
+
+	// Update lighting only on falling edge
+	if ((cap_attd.next_state == 1) & (cap_attd.prev_state == 0))
+	{
+		if (capATTDWhiteLight.state == WHITE) 
+		{
 			capATTDWhiteLight.pwmRaw = CAP_LIGHT_OFF;
 			capATTDBlueLight.pwmRaw = CAP_LIGHT_DEFAULT;
 			write_lighting_feature(capATTDWhiteLight);
 			write_lighting_feature(capATTDBlueLight);
 			
 			capATTDWhiteLight.state = BLUE;
+			//	printf("ATTD: %d\n", capATTDWhiteLight.state);
 		}
-		else {
+		else 
+		{
 			capATTDWhiteLight.pwmRaw = CAP_LIGHT_DEFAULT;
 			capATTDBlueLight.pwmRaw = CAP_LIGHT_OFF;
 			write_lighting_feature(capATTDWhiteLight);
@@ -415,44 +434,56 @@ void svc_ATTD_btn(void)
 			
 			capATTDWhiteLight.state = WHITE;
 		}
-		
-		// "Loop Debounce"
-		delay_ms(500);
+			
+		cap_attd.prev_state = cap_attd.next_state;
 	}
+		
+	// Rising Edge
+	if ((cap_attd.next_state == 0) & (cap_attd.prev_state == 1))
+	{
+		cap_attd.prev_state = cap_attd.next_state;
+	}	
 	
 	return;
 }
 
+
 void svc_DND_btn(void)
-{/*
-	if (!bcm2835_gpio_lev(CAP_RL)) 
-	{
-		// Detect rising edge of button
-		if (bcm2835_gpio_eds(CAP_RL))
-		{*/
-			
-	if (!bcm2835_gpio_lev(CAP_DND)) {
-		printf("State: %d\n", capDNDWhiteLight.state);
-		if (capDNDWhiteLight.state == WHITE) {
+{
+	// Capture btn state
+	cap_dnd.next_state = !bcm2835_gpio_lev(CAP_DND);
+
+	// Update lighting only on falling edge
+	if ((cap_dnd.next_state == 1) & (cap_dnd.prev_state == 0))
+	{	
+		if (capDNDWhiteLight.state == WHITE) 
+		{
 			capDNDWhiteLight.pwmRaw = CAP_LIGHT_OFF;
 			capDNDRedLight.pwmRaw = CAP_LIGHT_DEFAULT;
 			write_lighting_feature(capDNDWhiteLight);
 			write_lighting_feature(capDNDRedLight);
-			
-			capDNDWhiteLight.state = BLUE;
+
+			capDNDWhiteLight.state = RED;
 		}
-		else {
+		else 
+		{
 			capDNDWhiteLight.pwmRaw = CAP_LIGHT_DEFAULT;
 			capDNDRedLight.pwmRaw = CAP_LIGHT_OFF;
 			write_lighting_feature(capDNDWhiteLight);
 			write_lighting_feature(capDNDRedLight);
 			
 			capDNDWhiteLight.state = WHITE;
-		}
+		}	
 		
-		//  "Loop Debounce"
-		delay_ms(500);
+		cap_dnd.prev_state = cap_dnd.next_state;
 	}
+	
+	// Rising Edge
+	if ((cap_dnd.next_state == 0) & (cap_dnd.prev_state == 1))
+	{
+		cap_dnd.prev_state = cap_dnd.next_state;
+	}			
+				
 	return;
 }
 
@@ -473,10 +504,8 @@ void svc_RL_btn(void)
 			else
 				readingLight.next_state = 1;
 			
-			printf("CAP_RL EDS: %d\n", bcm2835_gpio_eds(CAP_RL));
 			// Clear EDS flag
 			bcm2835_gpio_set_eds(CAP_RL);
-			printf("CAP_RL EDS: %d\n", bcm2835_gpio_eds(CAP_RL));
 		}			
 	}
 	else {
