@@ -1,6 +1,6 @@
 
 /* ====================== CAP UI VERSION ============================ */
-#define CAP_VER_2
+#define CAP_VER_1
 
 /* ==================== WASH COLOR DEFAULT ========================== */
 #define RED_WASH
@@ -48,7 +48,8 @@
 #define MODE_WRITE 1
 #define MAX_LEN 32
 
-#define DIMMING_RATE	20000	// Higher is slower...
+#define DIMMING_RATE	0	// Higher is slower... 	(20000 ~ 5 seconds)
+							//						(    0 ~ 2 seconds)
 
 #ifdef RED_WASH
 #define RGB_R_DEFAULT	1000

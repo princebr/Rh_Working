@@ -57,12 +57,13 @@ int main(int argc, char **argv)
 		svc_LAY_btn();
 		svc_TTL_btn();
 		
-		svc_NEU_usw();
+		//svc_NEU_usw();
 		svc_LAY_usw();
 		
 		svc_RL_btn2();
 		
-		//svc_readingLight();
+		// Detect state changes from cap touch
+		svc_readingLight();
 		
 		svc_Light_Features();
 		
