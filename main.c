@@ -71,10 +71,10 @@ int main(int argc, char **argv)
 		//uart_tx_test();
 		//delay_ms(500);
 		
-		/*
-		data = test_timer();
-		printf ("Timer 1: %" PRIu64 "\n", data);
-		*/
+		
+		//data = getTimer();
+		//printf ("Timer 1 (main): %" PRIu64 "\n", data);
+		//delay_ms(500);
 		
 		/*
 		toggle_led();

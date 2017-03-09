@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>	// Use to print out uint64_t data types
 
 // Project Headers
 #include <functions.h>
@@ -135,10 +137,10 @@ void svc_Light_Features(void)
 struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_t target)
 {
 	rl.dim = ON;
-	printf("rl.dim: %d\n", rl.dim);
 	rl.timerStart = bcm2835_st_read(); // read system timer
 	rl.timerExp = rl.timerStart + rl.rate;
-	
+	printf("rl.rate: %d\n", rl.rate);
+	printf("sys timer: %d\n", bcm2835_st_read());
 	// add rollover mechanism here ...
 	
 	// set pwmTarget from target ...
@@ -150,12 +152,10 @@ struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_
 
 struct ledFeature svcLightFeature(struct ledFeature rl)
 {
-	//printf("DIM: %d\n:", readingLight2.dim);
 	// Is dimming enabled?
 	if (rl.dim == ON)
 	{
-		printf("readingLight2.pwmRaw: %d\n", readingLight2.pwmRaw);
-		printf("rl.pwmRaw: %d\n", rl.pwmRaw);
+		//printf("rl.timerExp: %d\n", rl.timerExp);
 		// Check for timer expiration
 		if (bcm2835_st_read() >= rl.timerExp)
 		{
@@ -167,6 +167,11 @@ struct ledFeature svcLightFeature(struct ledFeature rl)
 				
 			// Update PCA 
 			write_lighting_feature(rl);
+			
+			// Update new timer expiration
+			rl.timerStart = getTimer();
+			printf("rl.timerStart: %" PRIu64 "\n", rl.timerStart);
+			rl.timerExp = rl.timerStart + rl.rate;
 			
 			// Check if pwmTarget reached
 			if (rl.inc_dec == INC)
@@ -186,7 +191,6 @@ struct ledFeature svcLightFeature(struct ledFeature rl)
 				}	
 			}			
 		}
-		
 	}
 	
 	return rl;
@@ -261,6 +265,7 @@ void set_initial_conditions(void)
 	
 	readingLight1.inc_dec = INC;
 	readingLight2.inc_dec = INC;
+	readingLight2.rate = DIMMING_RATE;
 	readingLight2 = dimStart(readingLight2, readingLight, 1000);
 
 	// Set Cap TTL Light
@@ -430,8 +435,10 @@ void svc_readingLight(void)
 
 
 
-uint64_t test_timer(void)
+uint64_t getTimer(void)
 {
+	//uint64_t data = bcm2835_st_read();
+	//printf("Timer 1: %d" PRIu64 "\n", bcm2835_st_read());
 	return bcm2835_st_read();
 }
 

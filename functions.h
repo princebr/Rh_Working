@@ -4,10 +4,10 @@ struct ledFeature {
 	uint8_t 	state;
 	uint16_t 	pwmRaw;
 	uint16_t 	pwmTarget;
-	uint64_t 	timerStart;
+	uint64_t 	timerStart;	// may not need this ...
 	uint64_t 	timerExp;
 	uint8_t 	rollover;
-	uint8_t	rate;
+	uint32_t	rate;
 	uint8_t	dim;
 	uint8_t	inc_dec;
 	uint16_t 	address;
@@ -34,7 +34,9 @@ struct ledRGBFeature {
 	uint16_t 	pwmTarget_G;
 	uint16_t 	pwmRaw_B;
 	uint16_t 	pwmTarget_B;
-	uint8_t	rate;
+	uint64_t	timerStart;	// may not need this...
+	uint64_t	timerExp;
+	uint32_t	rate;
 	uint8_t	dim;
 	uint8_t	inc_dec;
 	uint16_t 	address;
@@ -83,7 +85,7 @@ void write_RGBlighting_feature(struct ledRGBFeature);
 void i2c_end(void);
 void close_bcm(void);
 void delay_ms(unsigned int);
-uint64_t test_timer(void);
+uint64_t getTimer(void);
 void svc_ATTD_btn(void);
 void svc_DND_btn(void);
 void svc_RL_btn(void);
