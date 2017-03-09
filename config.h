@@ -1,34 +1,40 @@
 
 /* ====================== CAP UI VERSION ============================ */
-#define CAP_VER_1
+#define CAP_VER_2
 
 /* ==================== WASH COLOR DEFAULT ========================== */
-#define CUSTOM_WASH
+#define RED_WASH
+
+/* -------------------------- BIDIR --------------------------------- */
+#define UART_TX	RPI_V2_GPIO_P1_08
+#define UART_RX	RPI_V2_GPIO_P1_10
 
 /* ------------------------ OUTPUTS --------------------------------- */
-#define ST_LED RPI_V2_GPIO_P1_32	// Status LED
-#define TTL_SW RPI_V2_GPIO_P1_15	// TTL Relay
-#define NEU_SW RPI_V2_GPIO_P1_13	// NEU Relay
-#define LAY_SW RPI_V2_GPIO_P1_11	// LAY Relay
-#define MUTE RPI_V2_GPIO_P1_07		// Amplifier Mute
+#define ST_LED 	RPI_V2_GPIO_P1_32	// Status LED
+#define TTL_SW 	RPI_V2_GPIO_P1_15	// TTL Relay
+#define NEU_SW 	RPI_V2_GPIO_P1_13	// NEU Relay
+#define LAY_SW 	RPI_V2_GPIO_P1_11	// LAY Relay
+#define MUTE 	RPI_V2_GPIO_P1_07	// Amplifier Mute
+#define SEL 	RPI_V2_GPIO_P1_22	// OLED Select
+#define RE_DE	RPI_V2_GPIO_P1_12	// RS-485 = /Read, Write
 
 /* ------------------------ INPUTS ---------------------------------- */
 
 // CAP Version 1
 #ifdef CAP_VER_1
 #define CAP_ATTD RPI_V2_GPIO_P1_29		// ATTD
-#define CAP_DND RPI_V2_GPIO_P1_31		// DND
-#define CAP_RL RPI_V2_GPIO_P1_33		// RL
-#define CAP_LF RPI_V2_GPIO_P1_35		// LF
+#define CAP_DND	RPI_V2_GPIO_P1_31		// DND
+#define CAP_RL 	RPI_V2_GPIO_P1_33		// RL
+#define CAP_LF 	RPI_V2_GPIO_P1_35		// LF
 #define CAP_TTL RPI_V2_GPIO_P1_37		// TTL
 #endif
 
 // CAP Version 2
 #ifdef CAP_VER_2
 #define CAP_ATTD RPI_V2_GPIO_P1_37	// ATTD
-#define CAP_DND RPI_V2_GPIO_P1_35	// DND
-#define CAP_RL RPI_V2_GPIO_P1_33	// RL
-#define CAP_LF RPI_V2_GPIO_P1_31	// LF
+#define CAP_DND	RPI_V2_GPIO_P1_35	// DND
+#define CAP_RL 	RPI_V2_GPIO_P1_33	// RL
+#define CAP_LF 	RPI_V2_GPIO_P1_31	// LF
 #define CAP_TTL RPI_V2_GPIO_P1_29	// TTL
 #endif
 
@@ -79,6 +85,9 @@
 
 #define RL1		1
 #define RL2		2
+
+#define INC		1
+#define DEC		0
 
 /* ------------------------ PCA9685 CONSTANTS ----------------------- */
 #define MODE1 0x00

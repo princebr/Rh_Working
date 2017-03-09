@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Project Headers
 #include <functions.h>
 #include <config.h>
+//#include <uart.h>
 
 
 char wbuf[MAX_LEN];
@@ -22,7 +24,6 @@ char led2_off[] = {LED2_ON_L, 0x00, 0x00, 0x00, 0x00};
 
 char all_on[] = {ALL_LED_ON, 0xBB};
 char all_off[] = {ALL_LED_OFF, 0x00};
-
 
 //uint8_t slave_address = 0x42;
 //uint8_t data;
@@ -77,6 +78,17 @@ uint8_t init_bcm(void)
 		// Set Amplifier Mute output
 		bcm2835_gpio_fsel(MUTE, BCM2835_GPIO_FSEL_OUTP);
 		
+		// Set OLED Select output
+		bcm2835_gpio_fsel(SEL, BCM2835_GPIO_FSEL_OUTP);
+		
+		// Explicitly set UART pins as alternate
+		bcm2835_gpio_fsel(UART_RX, BCM2835_GPIO_FSEL_ALT0);
+		bcm2835_gpio_fsel(UART_TX, BCM2835_GPIO_FSEL_ALT0);
+		
+		// Set RS-485 to READ mode
+		bcm2835_gpio_fsel(RE_DE, BCM2835_GPIO_FSEL_OUTP);
+		bcm2835_gpio_write(RE_DE, LOW);
+		
 		//bcm2835_i2c_setSlaveAddress(PCA1);
 		bcm2835_i2c_begin();
 		
@@ -108,7 +120,76 @@ void init_periph(void)
 	printf("Write Result (Config) = %d\n", data); 
 	delay(1);
 	
+	
 	return;
+}
+
+
+void svc_Light_Features(void)
+{
+	readingLight2 = svcLightFeature(readingLight2);
+	
+	return;
+}
+
+struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_t target)
+{
+	rl.dim = ON;
+	printf("rl.dim: %d\n", rl.dim);
+	rl.timerStart = bcm2835_st_read(); // read system timer
+	rl.timerExp = rl.timerStart + rl.rate;
+	
+	// add rollover mechanism here ...
+	
+	// set pwmTarget from target ...
+	rl.pwmTarget = target;
+	
+	return rl;
+}
+
+
+struct ledFeature svcLightFeature(struct ledFeature rl)
+{
+	//printf("DIM: %d\n:", readingLight2.dim);
+	// Is dimming enabled?
+	if (rl.dim == ON)
+	{
+		printf("readingLight2.pwmRaw: %d\n", readingLight2.pwmRaw);
+		printf("rl.pwmRaw: %d\n", rl.pwmRaw);
+		// Check for timer expiration
+		if (bcm2835_st_read() >= rl.timerExp)
+		{
+			// Incremement / Decrement
+			if (rl.inc_dec == INC)
+				rl.pwmRaw += 5;
+			else
+				rl.pwmRaw -= 5;
+				
+			// Update PCA 
+			write_lighting_feature(rl);
+			
+			// Check if pwmTarget reached
+			if (rl.inc_dec == INC)
+			{
+				if (rl.pwmRaw >= rl.pwmTarget)
+				{
+					// Disable dimming ...
+					rl.dim = OFF;
+				}
+			}
+			else
+			{
+				if (rl.pwmRaw <= rl.pwmTarget)
+				{
+					// Disable dimming ...
+					rl.dim = OFF;
+				}	
+			}			
+		}
+		
+	}
+	
+	return rl;
 }
 
 
@@ -130,6 +211,10 @@ void set_initial_conditions(void)
 	
 	// Default Reading Light Intensity
 	readingLight.intensity = RL_DEFAULT_MAX;
+	
+		
+	/*******************************************/
+	/* REVISIT THIS CONFIGURATION 
 		
 	// Set Reading Light state and turn on 
 	if (bcm2835_gpio_lev(NEU_USW))
@@ -143,7 +228,9 @@ void set_initial_conditions(void)
 		readingLight.mode = RL1;
 		readingLight1.pwmRaw = readingLight.intensity;
 		readingLight2.pwmRaw = 0;
-	}
+	}*/
+	
+	/*******************************************/
 		
 	// Trigger to turn on reading light by default
 	readingLight.next_state = 1;
@@ -160,11 +247,21 @@ void set_initial_conditions(void)
 	// Clear CAP DND states
 	cap_dnd.next_state = 0;
 	cap_dnd.prev_state = 0;
-		
-	printf("RL State: %d\n", readingLight.mode);
+	
+	// Set OLED display 1
+	bcm2835_gpio_write(SEL, HIGH);
+	
 	//***********************************/
 	
-
+	// Inititialize Reading Light
+	readingLight.mode = RL1;
+	//readingLight1.pwmRaw = readingLight.intensity;
+	readingLight1.pwmRaw = 0;
+	readingLight2.pwmRaw = 0;
+	
+	readingLight1.inc_dec = INC;
+	readingLight2.inc_dec = INC;
+	readingLight2 = dimStart(readingLight2, readingLight, 1000);
 
 	// Set Cap TTL Light
 	capTTLLight.state = OFF;
@@ -594,12 +691,12 @@ void clear_led(uint8_t led)
 	return;	
 }
 
-void toggle_led(uint8_t led)
+void toggle_led(void)//uint8_t led)
 {
-	if (bcm2835_gpio_lev(led))
-		bcm2835_gpio_write(led, LOW);
+	if (bcm2835_gpio_lev(SEL))
+		bcm2835_gpio_write(SEL, LOW);
 	else
-		bcm2835_gpio_write(led, HIGH);
+		bcm2835_gpio_write(SEL, HIGH);
 	return;
 }
 

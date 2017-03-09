@@ -62,11 +62,27 @@ int main(int argc, char **argv)
 		
 		svc_RL_btn2();
 		
-		svc_readingLight();
+		//svc_readingLight();
+		
+		svc_Light_Features();
+		
+		
+		
+		//uart_tx_test();
+		//delay_ms(500);
 		
 		/*
 		data = test_timer();
 		printf ("Timer 1: %" PRIu64 "\n", data);
+		*/
+		
+		/*
+		toggle_led();
+		printf("display 1\n");
+		delay_ms(2000);
+		toggle_led();
+		printf("display 2\n");
+		delay_ms(2000);
 		*/
 		
 		// Test Loop Delay

@@ -1,10 +1,17 @@
 	
 // Single Channel Lighting Features ---
 struct ledFeature {
-	uint8_t state;
-	uint16_t pwmRaw;
-	uint16_t address;
-	uint8_t device;
+	uint8_t 	state;
+	uint16_t 	pwmRaw;
+	uint16_t 	pwmTarget;
+	uint64_t 	timerStart;
+	uint64_t 	timerExp;
+	uint8_t 	rollover;
+	uint8_t	rate;
+	uint8_t	dim;
+	uint8_t	inc_dec;
+	uint16_t 	address;
+	uint8_t 	device;
 	};
 
 struct ledFeature readingLight1;
@@ -20,12 +27,18 @@ struct ledFeature capATTDBlueLight;
 
 // 3 Channel Lighting Features --------
 struct ledRGBFeature {
-	uint8_t state;
-	uint16_t pwmRaw_R;
-	uint16_t pwmRaw_G;
-	uint16_t pwmRaw_B;
-	uint16_t address;
-	uint8_t device;
+	uint8_t 	state;
+	uint16_t 	pwmRaw_R;
+	uint16_t 	pwmTarget_R;
+	uint16_t 	pwmRaw_G;
+	uint16_t 	pwmTarget_G;
+	uint16_t 	pwmRaw_B;
+	uint16_t 	pwmTarget_B;
+	uint8_t	rate;
+	uint8_t	dim;
+	uint8_t	inc_dec;
+	uint16_t 	address;
+	uint8_t 	device;
 	};
 
 struct ledRGBFeature backshellLight;	// Contains "pinlight" as well
@@ -79,9 +92,12 @@ void svc_LAY_btn(void);
 void svc_TTL_btn(void);
 void set_led(uint8_t);
 void clear_led(uint8_t);
-void toggle_led(uint8_t);
+void toggle_led(void);//uint8_t);
 void svc_NEU_usw(void);
 void svc_LAY_usw(void);
 void mute_audio(void);
 void unmute_audio(void);
-void svs_readingLight(void);
+void svc_Light_Features(void);
+void svc_readingLight(void);
+struct ledFeature svcLightFeature(struct ledFeature);
+struct ledFeature dimStart(struct ledFeature, struct rlFeature, uint16_t);
