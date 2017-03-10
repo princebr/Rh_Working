@@ -573,6 +573,7 @@ void svc_NEU_usw(void)
 	// Update lighting only on state change
 	if (neu_usw.next_state != neu_usw.prev_state)
 	{
+
 		// Change to use .state - don't pull lev twice...
 		if (bcm2835_gpio_lev(NEU_USW) & readingLight.mode == RL1)
 		{
@@ -624,19 +625,41 @@ void svc_NEU_usw(void)
 
 void svc_LAY_usw(void)
 {
+	// Capture uSW state
+	lay_usw.next_state = bcm2835_gpio_lev(LAY_USW);
+	
+	// Update lighting only on state change
+	if (lay_usw.next_state != lay_usw.prev_state)
+	{
 	// Detect level on LAY uSW
-	if (bcm2835_gpio_lev(LAY_USW))
-	{
-		printf("LAY uSW \n");
+		if (bcm2835_gpio_lev(LAY_USW))	
+		{
+			printf("LAY uSW \n");
 		
-		// dim lighting..................
+			// Initiate RGB Dimming Features
+			backshellLight = dimRGBStart(backshellLight, layRGB);
+			stowageLight = dimRGBStart(stowageLight, offRGB);
+			footwellLight = dimRGBStart(footwellLight, offRGB);
+			underIFELight = dimRGBStart(underIFELight, offRGB);
 		
-		// unmute audio
-		bcm2835_gpio_write(MUTE, LOW);
-	}
-	else
-	{
-		bcm2835_gpio_write(MUTE, HIGH);
+			// unmute audio
+			bcm2835_gpio_write(MUTE, LOW);
+		}
+		else
+		{
+			// Initiate RGB Dimming Features
+			backshellLight = dimRGBStart(backshellLight, neuRGB);
+			stowageLight = dimRGBStart(stowageLight, neuRGB);
+			footwellLight = dimRGBStart(footwellLight, neuRGB);
+			underIFELight = dimRGBStart(underIFELight, neuRGB);
+			
+			// mute audio
+			bcm2835_gpio_write(MUTE, HIGH);
+			
+		}
+		
+		// Update prev_state
+		lay_usw.prev_state = lay_usw.next_state;
 	}
 	
 	return;
