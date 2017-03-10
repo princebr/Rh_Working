@@ -24,7 +24,9 @@ int main(int argc, char **argv)
 
 	set_initial_conditions();
 	
-	// Write to all lighting features	
+	// Write to all lighting features
+	init_lighting();
+		
 	write_RGBlighting_feature(backshellLight);
 	write_RGBlighting_feature(stowageLight);
 	write_RGBlighting_feature(underIFELight);

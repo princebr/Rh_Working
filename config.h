@@ -3,7 +3,7 @@
 #define CAP_VER_2
 
 /* ==================== WASH COLOR DEFAULT ========================== */
-#define CUSTOM2_WASH
+#define CUSTOM3_WASH
 
 /* -------------------------- BIDIR --------------------------------- */
 #define UART_TX	RPI_V2_GPIO_P1_08
@@ -70,12 +70,16 @@
 #define RGB_B_DEFAULT	500
 #elif defined CUSTOM1_WASH
 #define RGB_R_DEFAULT	255
-#define RGB_G_DEFAULT	197
-#define RGB_B_DEFAULT	60
+#define RGB_G_DEFAULT	155
+#define RGB_B_DEFAULT	25
 #elif defined CUSTOM2_WASH
 #define RGB_R_DEFAULT	2000
-#define RGB_G_DEFAULT	1545
-#define RGB_B_DEFAULT	510
+#define RGB_G_DEFAULT	1215//1545
+#define RGB_B_DEFAULT	196
+#elif defined CUSTOM3_WASH
+#define RGB_R_DEFAULT	2600
+#define RGB_G_DEFAULT	1215//1545
+#define RGB_B_DEFAULT	196
 #endif
 
 #define CAP_LIGHT_DEFAULT	500

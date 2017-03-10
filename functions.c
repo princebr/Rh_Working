@@ -114,10 +114,17 @@ void init_periph(void)
 }
 
 
+void init_lighting(void)
+{
+	
+	backshellLight = dimRGBStart(backshellLight, neuRGB);
+
+	
+}
+
+
 void svc_Light_Features(void)
 {
-
-
 	readingLight1 = svcLightFeature(readingLight1);
 	printf("RL1.pwmRaw: %d\n", readingLight1.pwmRaw);
 	printf("RL1.dim: %d\n", readingLight1.dim);
@@ -126,7 +133,7 @@ void svc_Light_Features(void)
 	printf("RL2.pwmRaw: %d\n", readingLight2.pwmRaw);
 	printf("RL2.dim: %d\n", readingLight2.dim);
 
-	//backshellLight = dimRGBStart(backshellLight, neuRGB);
+	backshellLight = dimRGBStart(backshellLight, neuRGB);
 	//backshellLight = svcRGBLightFeature(backshellLight);
 	
 	return;
@@ -181,7 +188,6 @@ void svc_readingLight(void)
 
 
 
-/*
 struct ledRGBFeature dimRGBStart(struct ledRGBFeature rl, struct rgbRaw target)
 {
 	rl.dim = ON;
@@ -189,19 +195,43 @@ struct ledRGBFeature dimRGBStart(struct ledRGBFeature rl, struct rgbRaw target)
 
 	// add rollover mechanism here ...
 	
-	// set pwmTarget from target ...
+	//------------------------------------------------------------------
+	// set pwmTarget (PCA) from target (RGB) ...
 	
 	target.r = 200;
 	
-	rl.pwmTarget_R = (target.r/255) * 4095;
-	rl.pwmTarget_G = (target.b/255) * 4095;
-	rl.pwmTarget_B = (target.g/255) * 4095;
-	
+	rl.pwmTarget_R = setTarget(target.r);
+	rl.pwmTarget_R = setTarget(target.r);
+	rl.pwmTarget_R = setTarget(target.r);
+
 	printf(".pwmTarget_r: %d\n", rl.pwmTarget_R);
+	
+	//------------------------------------------------------------------
+	// Calculate numSteps
+	//
+	
+	//------------------------------------------------------------------
+	// Calculate step for each
+	// step = (target - raw) / numSteps
+	
+	//rl.step_r = (uint16_t)((rl.pwmTarget_R - rl.pwmRaw_R) / numSteps);
+	rl.step_g = 5;
+	rl.step_b = 5;
+	
 	
 	return rl;
 }
-*/
+
+uint16_t setTarget(uint8_t rgb)
+{
+	float f_target = ((float)rgb/255.0)*4095.0;
+	uint16_t target = (uint16_t)f_target;
+	
+	printf("target: %d\n", target);
+	
+	return target;
+}
+
 
 struct ledFeature svcLightFeature(struct ledFeature rl)
 {
