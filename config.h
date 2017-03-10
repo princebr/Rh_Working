@@ -1,9 +1,9 @@
 
 /* ====================== CAP UI VERSION ============================ */
-#define CAP_VER_1
+#define CAP_VER_2
 
 /* ==================== WASH COLOR DEFAULT ========================== */
-#define WHITE_WASH
+#define CUSTOM2_WASH
 
 /* -------------------------- BIDIR --------------------------------- */
 #define UART_TX	RPI_V2_GPIO_P1_08
@@ -68,14 +68,18 @@
 #define RGB_R_DEFAULT	500
 #define RGB_G_DEFAULT	500
 #define RGB_B_DEFAULT	500
-#elif defined CUSTOM_WASH
+#elif defined CUSTOM1_WASH
 #define RGB_R_DEFAULT	255
 #define RGB_G_DEFAULT	197
 #define RGB_B_DEFAULT	60
+#elif defined CUSTOM2_WASH
+#define RGB_R_DEFAULT	2000
+#define RGB_G_DEFAULT	1545
+#define RGB_B_DEFAULT	510
 #endif
 
-#define CAP_LIGHT_DEFAULT	1000
-#define CAP_LIGHT_HIGH		3500
+#define CAP_LIGHT_DEFAULT	500
+#define CAP_LIGHT_HIGH		4000
 #define CAP_LIGHT_OFF		0
 #define RL_DEFAULT_MAX		2000
 

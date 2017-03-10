@@ -24,26 +24,15 @@ int main(int argc, char **argv)
 
 	set_initial_conditions();
 	
-	// Write to all lighting features ...
-	
+	// Write to all lighting features	
 	write_RGBlighting_feature(backshellLight);
 	write_RGBlighting_feature(stowageLight);
 	write_RGBlighting_feature(underIFELight);
 	write_RGBlighting_feature(footwellLight);
 	
-	write_lighting_feature(capTTLLight);
-	delay_ms(500);
-	write_lighting_feature(capLAYLight);
-	delay_ms(500);
-	write_lighting_feature(capRLLight);
-	delay_ms(500);
-	write_lighting_feature(capDNDWhiteLight);
-	delay_ms(500);
-	write_lighting_feature(capATTDWhiteLight);
-	delay_ms(500);
-	
-
-	
+	// Light up Cap Touch UI
+	illuminateCapTouch(500);
+		
 	/*------------------- Main Routine --------------------*/
 	
 	
@@ -52,43 +41,24 @@ int main(int argc, char **argv)
 	
 	while (1)
 	{
-		
+		// Monitor capacitive UI buttons and provide feedback
 		svc_ATTD_btn();
 		svc_DND_btn();
 		svc_RL_btn();
 		svc_LAY_btn();
 		svc_TTL_btn();
 		
+		// Monitor seat microswitches
 		svc_NEU_usw();
 		svc_LAY_usw();
 		
-		//svc_RL_btn2();
-		
 		// Detect state changes from cap touch
+		svc_RL_btn2();
 		svc_readingLight();
 		
 		svc_Light_Features();
-		//delay_ms(250);
-		
 		
 		//uart_tx_test();
-		//delay_ms(500);
-		
-		
-		//data = getTimer();
-		//printf ("Timer 1 (main): %" PRIu64 "\n", data);
-		//delay_ms(500);
-		
-		/*
-		toggle_led();
-		printf("display 1\n");
-		delay_ms(2000);
-		toggle_led();
-		printf("display 2\n");
-		delay_ms(2000);
-		*/
-		
-		// Test Loop Delay
 		//delay_ms(500);
 		
 		// Standard Loop Delay

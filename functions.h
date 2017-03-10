@@ -5,7 +5,7 @@ struct ledFeature {
 	uint16_t 	pwmRaw;
 	uint16_t 	pwmTarget;
 	uint64_t 	timerExp;
-	uint8_t 	rollover;
+	//uint8_t 	rollover;
 	uint32_t	rate;
 	uint8_t	dim;
 	uint8_t	inc_dec;
@@ -33,6 +33,9 @@ struct ledRGBFeature {
 	uint16_t 	pwmTarget_G;
 	uint16_t 	pwmRaw_B;
 	uint16_t 	pwmTarget_B;
+	uint8_t	step_r;
+	uint8_t	step_g;
+	uint8_t	step_b;
 	uint64_t	timerExp;
 	uint32_t	rate;
 	uint8_t	dim;
@@ -47,6 +50,26 @@ struct ledRGBFeature underIFELight;
 struct ledRGBFeature stowageLight;
 //--------------------------------------
 
+// RGB Structures
+struct rgbRaw {
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+};
+
+struct rgbRaw neuRGB;
+struct rgbRaw layRGB;
+struct rgbRaw ttlTGB;
+
+struct rgbPCA {
+	uint16_t r;
+	uint16_t g;
+	uint16_t b;
+};
+
+struct rgbPCA neuRGBpca;
+struct rgbPCA layRGBpca;
+struct rgbPCA ttlRGBpca; 
 
 // Reading Light State -----------------
 struct rlFeature {
@@ -72,7 +95,6 @@ struct SW cap_rl_btn;
 struct SW cap_attd;
 struct SW cap_dnd;
 //--------------------------------------
-
 
 
 uint8_t init_bcm(void);
@@ -101,3 +123,7 @@ void svc_Light_Features(void);
 void svc_readingLight(void);
 struct ledFeature svcLightFeature(struct ledFeature);
 struct ledFeature dimStart(struct ledFeature, struct rlFeature, uint16_t);
+//struct ledFeature dimStart(struct ledFeature, struct rlFeature, uint16_t);
+struct ledRGBFeature dimRGBStart(struct ledRGBFeature, struct rgbRaw);
+void illuminateCapTouch(uint16_t);
+struct rgbPCA translateRGBvalues(struct rgbRaw);

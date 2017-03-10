@@ -17,19 +17,6 @@ char wbuf[MAX_LEN];
 char rbuf[MAX_LEN];
 
 
-char led0_on[] = {LED0_ON_L, 0x00, 0x00, 0x00, 0x00};
-
-// TEST Buffers
-char led2_on[] = {LED2_ON_L, 0x00, 0x00, 0x10, 0x00};
-char led2_off[] = {LED2_ON_L, 0x00, 0x00, 0x00, 0x00};
-//--------------
-
-char all_on[] = {ALL_LED_ON, 0xBB};
-char all_off[] = {ALL_LED_OFF, 0x00};
-
-//uint8_t slave_address = 0x42;
-//uint8_t data;
-
 uint8_t init_bcm(void)
 {
 	printf("Initialize BCM... \n");
@@ -129,7 +116,7 @@ void init_periph(void)
 
 void svc_Light_Features(void)
 {
-	//printf("RL.mode: %d\n", readingLight.mode);
+
 
 	readingLight1 = svcLightFeature(readingLight1);
 	printf("RL1.pwmRaw: %d\n", readingLight1.pwmRaw);
@@ -138,7 +125,9 @@ void svc_Light_Features(void)
 	readingLight2 = svcLightFeature(readingLight2);
 	printf("RL2.pwmRaw: %d\n", readingLight2.pwmRaw);
 	printf("RL2.dim: %d\n", readingLight2.dim);
-	//printf("Sys Timer: %" PRIu64 "\n", getTimer());
+
+	//backshellLight = dimRGBStart(backshellLight, neuRGB);
+	//backshellLight = svcRGBLightFeature(backshellLight);
 	
 	return;
 }
@@ -191,7 +180,9 @@ void svc_readingLight(void)
 }
 
 
-struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_t target)
+
+/*
+struct ledRGBFeature dimRGBStart(struct ledRGBFeature rl, struct rgbRaw target)
 {
 	rl.dim = ON;
 	rl.timerExp = getTimer() + rl.rate;
@@ -199,11 +190,18 @@ struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_
 	// add rollover mechanism here ...
 	
 	// set pwmTarget from target ...
-	rl.pwmTarget = target;
+	
+	target.r = 200;
+	
+	rl.pwmTarget_R = (target.r/255) * 4095;
+	rl.pwmTarget_G = (target.b/255) * 4095;
+	rl.pwmTarget_B = (target.g/255) * 4095;
+	
+	printf(".pwmTarget_r: %d\n", rl.pwmTarget_R);
 	
 	return rl;
 }
-
+*/
 
 struct ledFeature svcLightFeature(struct ledFeature rl)
 {
@@ -232,10 +230,129 @@ struct ledFeature svcLightFeature(struct ledFeature rl)
 			rl.timerExp = getTimer() + rl.rate;			
 					
 		}
+		// Consider out-of-bounds conditions for pwmRaw ...
 	}
 	
 	return rl;
 }
+
+
+struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_t target)
+{
+	rl.dim = ON;
+	rl.timerExp = getTimer() + rl.rate;
+
+	// add rollover mechanism here ...
+	
+	// set pwmTarget from target ...
+	rl.pwmTarget = target;
+	
+	return rl;
+}
+
+/*
+struct ledRGBFeature svcRGBLightFeature(struct ledRGBFeature rl)
+{
+	/*************************** RED **********************************/
+	// Is dimming enabled?
+	/*if (rl.dim_r == ON)
+	{
+		// Check for timer expiration
+		if (bcm2835_st_read() >= rl.timerExp_r)
+		{
+			// Check if pwmTarget reached
+			if ((rl.inc_dec == INC) & (rl.pwmRaw_R >= rl.pwmTarget_R))
+				rl.dim_r = OFF;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_R <= rl.pwmTarget_R))
+				rl.dim_r = OFF;
+				
+			// Incremement / Decrement
+			if ((rl.inc_dec == INC) & (rl.pwmRaw_R < rl.pwmTarget_R))
+				rl.pwmRaw_R += DIMMING_INC;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_R > rl.pwmTarget_R))
+				rl.pwmRaw_R -= DIMMING_INC;
+				
+			// Update PCA 
+			write_lighting_feature(rl);
+			
+			// Update new timer expiration
+			rl.timerExp_r = getTimer() + rl.rate_r;			
+					
+		}
+		// Consider out-of-bounds conditions for pwmRaw ...
+	}*/
+	
+	/***************************** GREEN ******************************/
+	// Is dimming enabled?
+	/*if (rl.dim_g == ON)
+	{
+		// Check for timer expiration
+		if (bcm2835_st_read() >= rl.timerExp_g)
+		{
+			// Check if pwmTarget reached
+			if ((rl.inc_dec == INC) & (rl.pwmRaw_G >= rl.pwmTarget_G))
+				rl.dim_g = OFF;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_G <= rl.pwmTarget_G))
+				rl.dim_g = OFF;
+				
+			// Incremement / Decrement
+			if ((rl.inc_dec == INC) & (rl.pwmRaw_G < rl.pwmTarget_G))
+				rl.pwmRaw_G += DIMMING_INC;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_G > rl.pwmTarget_G))
+				rl.pwmRaw_G -= DIMMING_INC;
+				
+			// Update PCA 
+			write_lighting_feature(rl);
+			
+			// Update new timer expiration
+			rl.timerExp_g = getTimer() + rl.rate_g;			
+					
+		}
+		// Consider out-of-bounds conditions for pwmRaw ...
+	}*/
+	
+	/*************************** BLUE *********************************/
+	// Is dimming enabled?
+	/*if (rl.dim_b == ON)
+	{
+		// Check for timer expiration
+		if (bcm2835_st_read() >= rl.timerExp_b)
+		{
+			// Check if pwmTarget reached
+			if ((rl.inc_dec == INC) & (rl.pwmRaw_B >= rl.pwmTarget_B))
+				rl.dim_b = OFF;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_B <= rl.pwmTarget_B))
+				rl.dim_b = OFF;
+				
+			// Incremement / Decrement
+			if ((rl.inc_dec == INC) & (rl.pwmRaw_B < rl.pwmTarget_B))
+				rl.pwmRaw_B += DIMMING_INC;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_B > rl.pwmTarget_B))
+				rl.pwmRaw_B -= DIMMING_INC;
+				
+			// Update PCA 
+			write_lighting_feature(rl);
+			
+			// Update new timer expiration
+			rl.timerExp_b = getTimer() + rl.rate_b;			
+					
+		}
+		// Consider out-of-bounds conditions for pwmRaw ...
+	}
+	
+	return rl;
+}*/
+
+/*
+struct rgbPCA translateRGBvalues(struct rgbRaw rgb )
+{
+	struct rgbPCA rgb_pca;
+	rgb_pca.r = (uint16_t)(rgb.r/255) * 4095;
+	printf("float: %f\n", (200/255)*4095);
+	rgb_pca.g = (uint16_t)(rgb.g/255) * 4095;
+	rgb_pca.b = (uint16_t)(rgb.b/255) * 4095;
+	
+}*/
 
 
 void set_initial_conditions(void)
@@ -262,7 +379,7 @@ void set_initial_conditions(void)
 	
 	// Inititialize Reading Light(s) to start from 0
 	readingLight1.pwmRaw = 0;
-	readingLight2.pwmRaw = 10;
+	readingLight2.pwmRaw = 0;
 	
 	// Set to fade on
 	readingLight1.inc_dec = INC;
@@ -438,14 +555,14 @@ void write_RGBlighting_feature(struct ledRGBFeature feature)
 	return;
 }
 
-
+// Pull system timer for use with dimming
 uint64_t getTimer(void)
 {
 	return bcm2835_st_read();
 }
 
 
-/* --------- SWITCH ACTIONS --------- */
+/* ----------------------- SWITCH ACTIONS --------------------------- */
 void svc_NEU_usw(void)
 {
 	// Capture uSW state
@@ -476,15 +593,7 @@ void svc_NEU_usw(void)
 			readingLight2.inc_dec = DEC;
 		}
 
-		// REPLACE WITH FADE ROUTINE ******************
-		// Write only if RL is turned ON
-		/*if (readingLight.next_state == ON)
-		{
-			write_lighting_feature(readingLight1);
-			write_lighting_feature(readingLight2);
-		}*/
-		// ********************************************
-		
+		// Initiate reading light dimming
 		readingLight1 = dimStart(readingLight1, readingLight, readingLight1.pwmTarget);
 		readingLight2 = dimStart(readingLight2, readingLight, readingLight2.pwmTarget);
 		
@@ -499,7 +608,7 @@ void svc_NEU_usw(void)
 
 void svc_LAY_usw(void)
 {
-	// CHANGE TO LEV ***************
+	// Detect level on LAY uSW
 	if (bcm2835_gpio_lev(LAY_USW))
 	{
 		printf("LAY uSW \n");
@@ -518,7 +627,7 @@ void svc_LAY_usw(void)
 }
 
 
-/* --------- BTN ACTIONS --------- */
+/* -------------------------- BTN ACTIONS --------------------------- */
 
 void svc_ATTD_btn(void)
 {
@@ -600,7 +709,7 @@ void svc_DND_btn(void)
 	return;
 }
 
-// Duplicate for Cap button at RL...
+// Detect RL BTN on Cap Touch UI
 void svc_RL_btn(void)
 {
 	if (!bcm2835_gpio_lev(CAP_RL)) 
@@ -629,7 +738,7 @@ void svc_RL_btn(void)
 	return;
 }
 
-
+// Engage relay for Seat Control Unit - Lay Flat Position
 void svc_LAY_btn(void)
 {
 	if (!bcm2835_gpio_lev(CAP_LF)) {
@@ -645,6 +754,7 @@ void svc_LAY_btn(void)
 	return;
 }
 
+// Engage relay for Seat Control Unit - TTL Position
 void svc_TTL_btn(void)
 {
 	if (!bcm2835_gpio_lev(CAP_TTL)) {
@@ -660,7 +770,7 @@ void svc_TTL_btn(void)
 	return;
 }
 
-// Cap touch at RL
+// Detect RL BTN on Reading Light Assy
 // EDS didn't work on Pin 40, so had to make own edge detect
 void svc_RL_btn2(void)
 {
@@ -753,5 +863,22 @@ void close_bcm(void)
 void delay_ms(unsigned int ms)
 {
 	bcm2835_delay(ms);
+	return;
+}
+
+
+void illuminateCapTouch(uint16_t delay)
+{
+	write_lighting_feature(capTTLLight);
+	delay_ms(delay);
+	write_lighting_feature(capLAYLight);
+	delay_ms(delay);
+	write_lighting_feature(capRLLight);
+	delay_ms(delay);
+	write_lighting_feature(capDNDWhiteLight);
+	delay_ms(delay);
+	write_lighting_feature(capATTDWhiteLight);
+	delay_ms(delay);
+	
 	return;
 }
