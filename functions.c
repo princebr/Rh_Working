@@ -116,25 +116,35 @@ void init_periph(void)
 
 void init_lighting(void)
 {
+	// Set initial lighting conditions
+	write_RGBlighting_feature(backshellLight);
+	write_RGBlighting_feature(stowageLight);
+	write_RGBlighting_feature(underIFELight);
+	write_RGBlighting_feature(footwellLight);
 	
-	backshellLight = dimRGBStart(backshellLight, neuRGB);
-
-	
+	// Initiate dim to presesntation state
+	backshellLight = dimRGBStart(backshellLight, ttlRGB);
+	stowageLight = dimRGBStart(stowageLight, ttlRGB);
+	underIFELight = dimRGBStart(underIFELight, ttlRGB);
+	footwellLight = dimRGBStart(footwellLight, ttlRGB);
 }
 
 
 void svc_Light_Features(void)
 {
 	readingLight1 = svcLightFeature(readingLight1);
-	printf("RL1.pwmRaw: %d\n", readingLight1.pwmRaw);
-	printf("RL1.dim: %d\n", readingLight1.dim);
+	//printf("RL1.pwmRaw: %d\n", readingLight1.pwmRaw);
+	//printf("RL1.dim: %d\n", readingLight1.dim);
 	
 	readingLight2 = svcLightFeature(readingLight2);
-	printf("RL2.pwmRaw: %d\n", readingLight2.pwmRaw);
-	printf("RL2.dim: %d\n", readingLight2.dim);
+	//printf("RL2.pwmRaw: %d\n", readingLight2.pwmRaw);
+	//printf("RL2.dim: %d\n", readingLight2.dim);
 
-	backshellLight = dimRGBStart(backshellLight, neuRGB);
-	//backshellLight = svcRGBLightFeature(backshellLight);
+	
+	backshellLight = svcRGBLightFeature(backshellLight);
+	stowageLight = svcRGBLightFeature(stowageLight);
+	underIFELight = svcRGBLightFeature(underIFELight);
+	footwellLight = svcRGBLightFeature(footwellLight);
 	
 	return;
 }
@@ -190,34 +200,40 @@ void svc_readingLight(void)
 
 struct ledRGBFeature dimRGBStart(struct ledRGBFeature rl, struct rgbRaw target)
 {
+	
 	rl.dim = ON;
 	rl.timerExp = getTimer() + rl.rate;
+	if (rl.pwmRaw_R > target.r)
+		rl.inc_dec = DEC;
+	else
+		rl.inc_dec = INC;
 
 	// add rollover mechanism here ...
 	
 	//------------------------------------------------------------------
-	// set pwmTarget (PCA) from target (RGB) ...
+	// set pwmTarget from target ...
 	
-	target.r = 200;
-	
-	rl.pwmTarget_R = setTarget(target.r);
-	rl.pwmTarget_R = setTarget(target.r);
-	rl.pwmTarget_R = setTarget(target.r);
-
-	printf(".pwmTarget_r: %d\n", rl.pwmTarget_R);
+	rl.pwmTarget_R = target.r;
+	rl.pwmTarget_G = target.g;
+	rl.pwmTarget_B = target.b;
 	
 	//------------------------------------------------------------------
 	// Calculate numSteps
 	//
+	uint16_t numSteps = 50;
 	
 	//------------------------------------------------------------------
 	// Calculate step for each
 	// step = (target - raw) / numSteps
 	
-	//rl.step_r = (uint16_t)((rl.pwmTarget_R - rl.pwmRaw_R) / numSteps);
-	rl.step_g = 5;
-	rl.step_b = 5;
+	//rl.step_r = (uint16_t)((float)(rl.pwmTarget_R - rl.pwmRaw_R) / (float)numSteps);
+	rl.step_r = (uint16_t)((rl.pwmTarget_R - rl.pwmRaw_R) / numSteps);
+	rl.step_g = (uint16_t)((rl.pwmTarget_G - rl.pwmRaw_G) / numSteps);
+	rl.step_b = (uint16_t)((rl.pwmTarget_B - rl.pwmRaw_B) / numSteps);
 	
+	printf("rl.step_r: %d\n", rl.step_r);
+	printf("rl.step_g: %d\n", rl.step_g);
+	printf("rl.step_b: %d\n", rl.step_b);
 	
 	return rl;
 }
@@ -226,8 +242,6 @@ uint16_t setTarget(uint8_t rgb)
 {
 	float f_target = ((float)rgb/255.0)*4095.0;
 	uint16_t target = (uint16_t)f_target;
-	
-	printf("target: %d\n", target);
 	
 	return target;
 }
@@ -238,6 +252,7 @@ struct ledFeature svcLightFeature(struct ledFeature rl)
 	// Is dimming enabled?
 	if (rl.dim == ON)
 	{
+		printf("rl.pwmRaw: %d\n", rl.pwmRaw);
 		// Check for timer expiration
 		if (bcm2835_st_read() >= rl.timerExp)
 		{
@@ -280,109 +295,49 @@ struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_
 	return rl;
 }
 
-/*
+
 struct ledRGBFeature svcRGBLightFeature(struct ledRGBFeature rl)
 {
-	/*************************** RED **********************************/
+	printf("rgb rl.dim: %d\n", rl.dim);
 	// Is dimming enabled?
-	/*if (rl.dim_r == ON)
+	if (rl.dim == ON)
 	{
+		printf("pwmRaw_R: %d\n", rl.pwmRaw_R);
 		// Check for timer expiration
-		if (bcm2835_st_read() >= rl.timerExp_r)
+		if (bcm2835_st_read() >= rl.timerExp)
 		{
 			// Check if pwmTarget reached
 			if ((rl.inc_dec == INC) & (rl.pwmRaw_R >= rl.pwmTarget_R))
-				rl.dim_r = OFF;
+				rl.dim = OFF;
 			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_R <= rl.pwmTarget_R))
-				rl.dim_r = OFF;
+				rl.dim = OFF;
 				
 			// Incremement / Decrement
 			if ((rl.inc_dec == INC) & (rl.pwmRaw_R < rl.pwmTarget_R))
-				rl.pwmRaw_R += DIMMING_INC;
+			{
+				rl.pwmRaw_R += rl.step_r;
+				rl.pwmRaw_G += rl.step_g;
+				rl.pwmRaw_B += rl.step_b;
+			}
 			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_R > rl.pwmTarget_R))
-				rl.pwmRaw_R -= DIMMING_INC;
+			{
+				rl.pwmRaw_R += rl.step_r;
+				rl.pwmRaw_G += rl.step_g;
+				rl.pwmRaw_B += rl.step_b;
+			}
 				
 			// Update PCA 
-			write_lighting_feature(rl);
+			write_RGBlighting_feature(rl);
 			
 			// Update new timer expiration
-			rl.timerExp_r = getTimer() + rl.rate_r;			
-					
-		}
-		// Consider out-of-bounds conditions for pwmRaw ...
-	}*/
-	
-	/***************************** GREEN ******************************/
-	// Is dimming enabled?
-	/*if (rl.dim_g == ON)
-	{
-		// Check for timer expiration
-		if (bcm2835_st_read() >= rl.timerExp_g)
-		{
-			// Check if pwmTarget reached
-			if ((rl.inc_dec == INC) & (rl.pwmRaw_G >= rl.pwmTarget_G))
-				rl.dim_g = OFF;
-			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_G <= rl.pwmTarget_G))
-				rl.dim_g = OFF;
-				
-			// Incremement / Decrement
-			if ((rl.inc_dec == INC) & (rl.pwmRaw_G < rl.pwmTarget_G))
-				rl.pwmRaw_G += DIMMING_INC;
-			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_G > rl.pwmTarget_G))
-				rl.pwmRaw_G -= DIMMING_INC;
-				
-			// Update PCA 
-			write_lighting_feature(rl);
-			
-			// Update new timer expiration
-			rl.timerExp_g = getTimer() + rl.rate_g;			
-					
-		}
-		// Consider out-of-bounds conditions for pwmRaw ...
-	}*/
-	
-	/*************************** BLUE *********************************/
-	// Is dimming enabled?
-	/*if (rl.dim_b == ON)
-	{
-		// Check for timer expiration
-		if (bcm2835_st_read() >= rl.timerExp_b)
-		{
-			// Check if pwmTarget reached
-			if ((rl.inc_dec == INC) & (rl.pwmRaw_B >= rl.pwmTarget_B))
-				rl.dim_b = OFF;
-			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_B <= rl.pwmTarget_B))
-				rl.dim_b = OFF;
-				
-			// Incremement / Decrement
-			if ((rl.inc_dec == INC) & (rl.pwmRaw_B < rl.pwmTarget_B))
-				rl.pwmRaw_B += DIMMING_INC;
-			else if ((rl.inc_dec == DEC) & (rl.pwmRaw_B > rl.pwmTarget_B))
-				rl.pwmRaw_B -= DIMMING_INC;
-				
-			// Update PCA 
-			write_lighting_feature(rl);
-			
-			// Update new timer expiration
-			rl.timerExp_b = getTimer() + rl.rate_b;			
+			rl.timerExp = getTimer() + rl.rate;			
 					
 		}
 		// Consider out-of-bounds conditions for pwmRaw ...
 	}
 	
 	return rl;
-}*/
-
-/*
-struct rgbPCA translateRGBvalues(struct rgbRaw rgb )
-{
-	struct rgbPCA rgb_pca;
-	rgb_pca.r = (uint16_t)(rgb.r/255) * 4095;
-	printf("float: %f\n", (200/255)*4095);
-	rgb_pca.g = (uint16_t)(rgb.g/255) * 4095;
-	rgb_pca.b = (uint16_t)(rgb.b/255) * 4095;
-	
-}*/
+}
 
 
 void set_initial_conditions(void)
@@ -500,38 +455,55 @@ void set_initial_conditions(void)
 	capATTDBlueLight.address = CAP_ATTD_BLUE_BASE;
 	capATTDBlueLight.device = PCA1;
 			
+	/********************** WASH SETTINGS *****************************/		
+	// Set target RGB values
+	neuRGB.r = NEU_RGB_R;
+	neuRGB.g = NEU_RGB_G;
+	neuRGB.b = NEU_RGB_B;
+	layRGB.r = LAY_RGB_R;
+	layRGB.g = LAY_RGB_G;
+	layRGB.b = LAY_RGB_B;
+	ttlRGB.r = TTL_RGB_R;
+	ttlRGB.g = TTL_RGB_G;
+	ttlRGB.b = TTL_RGB_B;
+		
 	// Set Backshell Light
 	backshellLight.state = OFF;
-	backshellLight.pwmRaw_R = RGB_R_DEFAULT;
-	backshellLight.pwmRaw_G = RGB_G_DEFAULT;
-	backshellLight.pwmRaw_B = RGB_B_DEFAULT;
+	backshellLight.rate = RGB_DIMMING_RATE;
+	backshellLight.pwmRaw_R = offRGB.r;//RGB_R_DEFAULT;
+	backshellLight.pwmRaw_G = offRGB.g;//RGB_G_DEFAULT;
+	backshellLight.pwmRaw_B = offRGB.b;//GB_B_DEFAULT;
 	backshellLight.address = CH13_BASE;
 	backshellLight.device = PCA1;
 
 	// Set Footwell Light
 	footwellLight.state = OFF;
-	footwellLight.pwmRaw_R = RGB_R_DEFAULT;
-	footwellLight.pwmRaw_G = RGB_G_DEFAULT;
-	footwellLight.pwmRaw_B = RGB_B_DEFAULT;
+	footwellLight.rate = RGB_DIMMING_RATE;
+	footwellLight.pwmRaw_R = offRGB.r;
+	footwellLight.pwmRaw_G = offRGB.g;
+	footwellLight.pwmRaw_B = offRGB.b;
 	footwellLight.address = CH3_BASE;
 	footwellLight.device = PCA2;
 	
 	// Set Under IFE Light
 	underIFELight.state = OFF;
-	underIFELight.pwmRaw_R = RGB_R_DEFAULT;
-	underIFELight.pwmRaw_G = RGB_G_DEFAULT;
-	underIFELight.pwmRaw_B = RGB_B_DEFAULT;
+	underIFELight.rate = RGB_DIMMING_RATE;
+	underIFELight.pwmRaw_R = offRGB.r;
+	underIFELight.pwmRaw_G = offRGB.g;
+	underIFELight.pwmRaw_B = offRGB.b;
 	underIFELight.address = CH0_BASE;
 	underIFELight.device = PCA2;
 	
 	// Set Stowage Light
 	stowageLight.state = OFF;
-	stowageLight.pwmRaw_R = RGB_R_DEFAULT;
-	stowageLight.pwmRaw_G = RGB_G_DEFAULT;
-	stowageLight.pwmRaw_B = RGB_B_DEFAULT;
+	stowageLight.rate = RGB_DIMMING_RATE;
+	stowageLight.pwmRaw_R = offRGB.r;
+	stowageLight.pwmRaw_G = offRGB.g;
+	stowageLight.pwmRaw_B = offRGB.b;
 	stowageLight.address = CH10_BASE;
 	stowageLight.device = PCA1;	
-		
+	
+	
 	return;
 }
 
@@ -611,6 +583,14 @@ void svc_NEU_usw(void)
 			readingLight1.inc_dec = DEC;
 			readingLight2.pwmTarget = readingLight.intensity;
 			readingLight2.inc_dec = INC;
+			
+			// Initiate RGB Dimming Features
+			backshellLight = dimRGBStart(backshellLight, neuRGB);
+			stowageLight = dimRGBStart(stowageLight, neuRGB);
+			footwellLight = dimRGBStart(footwellLight, neuRGB);
+			underIFELight = dimRGBStart(underIFELight, neuRGB);
+			
+			
 		}
 		// Change to use .state - don't pull lev twice...
 		else if (!bcm2835_gpio_lev(NEU_USW) & readingLight.mode == RL2)
@@ -621,6 +601,12 @@ void svc_NEU_usw(void)
 			readingLight1.inc_dec = INC;
 			readingLight2.pwmTarget = 0;
 			readingLight2.inc_dec = DEC;
+			
+			// Initiate RGB Dimming Features
+			backshellLight = dimRGBStart(backshellLight, ttlRGB);
+			stowageLight = dimRGBStart(stowageLight, ttlRGB);
+			footwellLight = dimRGBStart(footwellLight, ttlRGB);
+			underIFELight = dimRGBStart(underIFELight, ttlRGB);
 		}
 
 		// Initiate reading light dimming

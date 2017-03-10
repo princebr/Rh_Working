@@ -33,9 +33,9 @@ struct ledRGBFeature {
 	uint16_t 	pwmTarget_G;
 	uint16_t 	pwmRaw_B;
 	uint16_t 	pwmTarget_B;
-	uint8_t	step_r;
-	uint8_t	step_g;
-	uint8_t	step_b;
+	int8_t		step_r;
+	int8_t		step_g;
+	int8_t		step_b;
 	uint64_t	timerExp;
 	uint32_t	rate;
 	uint8_t	dim;
@@ -52,24 +52,15 @@ struct ledRGBFeature stowageLight;
 
 // RGB Structures
 struct rgbRaw {
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-};
-
-struct rgbRaw neuRGB;
-struct rgbRaw layRGB;
-struct rgbRaw ttlTGB;
-
-struct rgbPCA {
 	uint16_t r;
 	uint16_t g;
 	uint16_t b;
 };
 
-struct rgbPCA neuRGBpca;
-struct rgbPCA layRGBpca;
-struct rgbPCA ttlRGBpca; 
+struct rgbRaw neuRGB;
+struct rgbRaw layRGB;
+struct rgbRaw ttlRGB;
+struct rgbRaw offRGB;
 
 // Reading Light State -----------------
 struct rlFeature {
@@ -122,6 +113,7 @@ void unmute_audio(void);
 void svc_Light_Features(void);
 void svc_readingLight(void);
 struct ledFeature svcLightFeature(struct ledFeature);
+struct ledRGBFeature svcRGBLightFeature(struct ledRGBFeature);
 struct ledFeature dimStart(struct ledFeature, struct rlFeature, uint16_t);
 struct ledRGBFeature dimRGBStart(struct ledRGBFeature, struct rgbRaw);
 void illuminateCapTouch(uint16_t);

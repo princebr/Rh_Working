@@ -3,7 +3,7 @@
 #define CAP_VER_2
 
 /* ==================== WASH COLOR DEFAULT ========================== */
-#define CUSTOM3_WASH
+#define CUSTOM4_WASH
 
 /* -------------------------- BIDIR --------------------------------- */
 #define UART_TX	RPI_V2_GPIO_P1_08
@@ -49,6 +49,7 @@
 #define MAX_LEN 32
 
 #define DIMMING_INC		10
+#define RGB_DIMMING_RATE	40000
 #define DIMMING_RATE	0	// Higher is slower... 	(20000 ~ 5 seconds)
 							//						(    0 ~ 2 seconds)
 
@@ -74,13 +75,41 @@
 #define RGB_B_DEFAULT	25
 #elif defined CUSTOM2_WASH
 #define RGB_R_DEFAULT	2000
-#define RGB_G_DEFAULT	1215//1545
+#define RGB_G_DEFAULT	1215
 #define RGB_B_DEFAULT	196
-#elif defined CUSTOM3_WASH
+#elif defined CUSTOM3_WASH	// Warm White
 #define RGB_R_DEFAULT	2600
-#define RGB_G_DEFAULT	1215//1545
+#define RGB_G_DEFAULT	1215
 #define RGB_B_DEFAULT	196
+#elif defined CUSTOM3_RGB_WASH
+#define RGB_R_DEFAULT	162
+#define RGB_G_DEFAULT	76
+#define RGB_B_DEFAULT	12
+#elif defined CUSTOM4_WASH	// Amber
+#define RGB_R_DEFAULT	4000
+#define RGB_G_DEFAULT	1200
+#define RGB_B_DEFAULT	100
 #endif
+
+// 100% Default
+#define TTL_RGB_R		RGB_R_DEFAULT
+#define TTL_RGB_G		RGB_G_DEFAULT
+#define TTL_RGB_B		RGB_B_DEFAULT
+
+// 75% of TTL levels
+#define NEU_RGB_R		2000//3000
+#define NEU_RGB_G		450//900
+#define NEU_RGB_B		50//75
+
+// Used in Lay Flat Position - BS/PN
+#define LAY_RGB_R		800
+#define LAY_RGB_G		240
+#define LAY_RGB_B		20
+
+// Used in Lay Flat Position - ST, UIFE, FW
+#define OFF_RGB_R		0
+#define OFF_RGB_G		0
+#define OFF_RGB_B		0
 
 #define CAP_LIGHT_DEFAULT	500
 #define CAP_LIGHT_HIGH		4000

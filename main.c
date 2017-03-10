@@ -26,11 +26,6 @@ int main(int argc, char **argv)
 	
 	// Write to all lighting features
 	init_lighting();
-		
-	write_RGBlighting_feature(backshellLight);
-	write_RGBlighting_feature(stowageLight);
-	write_RGBlighting_feature(underIFELight);
-	write_RGBlighting_feature(footwellLight);
 	
 	// Light up Cap Touch UI
 	illuminateCapTouch(500);
