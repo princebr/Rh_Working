@@ -4,7 +4,6 @@ struct ledFeature {
 	uint8_t 	state;
 	uint16_t 	pwmRaw;
 	uint16_t 	pwmTarget;
-	uint64_t 	timerStart;	// may not need this ...
 	uint64_t 	timerExp;
 	uint8_t 	rollover;
 	uint32_t	rate;
@@ -34,7 +33,6 @@ struct ledRGBFeature {
 	uint16_t 	pwmTarget_G;
 	uint16_t 	pwmRaw_B;
 	uint16_t 	pwmTarget_B;
-	uint64_t	timerStart;	// may not need this...
 	uint64_t	timerExp;
 	uint32_t	rate;
 	uint8_t	dim;

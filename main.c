@@ -27,7 +27,9 @@ int main(int argc, char **argv)
 	// Write to all lighting features ...
 	
 	write_RGBlighting_feature(backshellLight);
-	//write_RGBlighting_feature(stowageLight);
+	write_RGBlighting_feature(stowageLight);
+	write_RGBlighting_feature(underIFELight);
+	write_RGBlighting_feature(footwellLight);
 	
 	write_lighting_feature(capTTLLight);
 	delay_ms(500);
@@ -57,16 +59,16 @@ int main(int argc, char **argv)
 		svc_LAY_btn();
 		svc_TTL_btn();
 		
-		//svc_NEU_usw();
+		svc_NEU_usw();
 		svc_LAY_usw();
 		
-		svc_RL_btn2();
+		//svc_RL_btn2();
 		
 		// Detect state changes from cap touch
 		svc_readingLight();
 		
 		svc_Light_Features();
-		
+		//delay_ms(250);
 		
 		
 		//uart_tx_test();

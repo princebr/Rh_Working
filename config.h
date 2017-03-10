@@ -3,7 +3,7 @@
 #define CAP_VER_1
 
 /* ==================== WASH COLOR DEFAULT ========================== */
-#define RED_WASH
+#define WHITE_WASH
 
 /* -------------------------- BIDIR --------------------------------- */
 #define UART_TX	RPI_V2_GPIO_P1_08
@@ -48,6 +48,7 @@
 #define MODE_WRITE 1
 #define MAX_LEN 32
 
+#define DIMMING_INC		10
 #define DIMMING_RATE	0	// Higher is slower... 	(20000 ~ 5 seconds)
 							//						(    0 ~ 2 seconds)
 

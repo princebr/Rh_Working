@@ -129,16 +129,72 @@ void init_periph(void)
 
 void svc_Light_Features(void)
 {
+	//printf("RL.mode: %d\n", readingLight.mode);
+
+	readingLight1 = svcLightFeature(readingLight1);
+	printf("RL1.pwmRaw: %d\n", readingLight1.pwmRaw);
+	printf("RL1.dim: %d\n", readingLight1.dim);
+	
 	readingLight2 = svcLightFeature(readingLight2);
+	printf("RL2.pwmRaw: %d\n", readingLight2.pwmRaw);
+	printf("RL2.dim: %d\n", readingLight2.dim);
+	//printf("Sys Timer: %" PRIu64 "\n", getTimer());
 	
 	return;
 }
 
+// Coordinator between both cap touch interfaces
+void svc_readingLight(void)
+{
+	// Detect state change
+	if (readingLight.next_state != readingLight.prev_state)
+	{
+		// If next_state is ON
+		if (readingLight.next_state)
+		{
+			printf("RL ON \n");
+			printf("RL.mode: %d\n", readingLight.mode);
+			if (readingLight.mode == RL1)
+			{
+				readingLight1.pwmTarget = readingLight.intensity;
+				readingLight1.inc_dec = INC;
+				readingLight2.pwmTarget = 0;
+				readingLight2.inc_dec = DEC;
+			}
+			else
+			{
+				readingLight1.pwmTarget = 0;
+				readingLight1.inc_dec = DEC;
+				readingLight2.pwmTarget = readingLight.intensity;
+				readingLight2.inc_dec = INC;
+			}
+		}
+		// If next_state is OFF
+		else
+		{
+			printf("RL OFF \n");
+
+			readingLight1.pwmTarget = 0;
+			readingLight1.inc_dec = DEC;
+			readingLight2.pwmTarget = 0;
+			readingLight2.inc_dec = DEC;
+		}
+		
+		// Set dim = ON and assign target PWM
+		readingLight1 = dimStart(readingLight1, readingLight, readingLight1.pwmTarget);
+		readingLight2 = dimStart(readingLight2, readingLight, readingLight2.pwmTarget);
+		
+		// Update state transition
+		readingLight.prev_state = readingLight.next_state;
+		
+	}
+}
+
+
 struct ledFeature dimStart(struct ledFeature rl, struct rlFeature state, uint16_t target)
 {
 	rl.dim = ON;
-	rl.timerStart = bcm2835_st_read(); // read system timer
-	rl.timerExp = rl.timerStart + rl.rate;
+	rl.timerExp = getTimer() + rl.rate;
 
 	// add rollover mechanism here ...
 	
@@ -157,37 +213,24 @@ struct ledFeature svcLightFeature(struct ledFeature rl)
 		// Check for timer expiration
 		if (bcm2835_st_read() >= rl.timerExp)
 		{
+			// Check if pwmTarget reached
+			if ((rl.inc_dec == INC) & (rl.pwmRaw >= rl.pwmTarget))
+				rl.dim = OFF;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw <= rl.pwmTarget))
+				rl.dim = OFF;
+				
 			// Incremement / Decrement
-			if (rl.inc_dec == INC)
-				rl.pwmRaw += 5;
-			else
-				rl.pwmRaw -= 5;
+			if ((rl.inc_dec == INC) & (rl.pwmRaw < rl.pwmTarget))
+				rl.pwmRaw += DIMMING_INC;
+			else if ((rl.inc_dec == DEC) & (rl.pwmRaw > rl.pwmTarget))
+				rl.pwmRaw -= DIMMING_INC;
 				
 			// Update PCA 
 			write_lighting_feature(rl);
 			
 			// Update new timer expiration
-			rl.timerStart = getTimer();
-			printf("rl.timerStart: %" PRIu64 "\n", rl.timerStart);
-			rl.timerExp = rl.timerStart + rl.rate;
-			
-			// Check if pwmTarget reached
-			if (rl.inc_dec == INC)
-			{
-				if (rl.pwmRaw >= rl.pwmTarget)
-				{
-					// Disable dimming ...
-					rl.dim = OFF;
-				}
-			}
-			else
-			{
-				if (rl.pwmRaw <= rl.pwmTarget)
-				{
-					// Disable dimming ...
-					rl.dim = OFF;
-				}	
-			}			
+			rl.timerExp = getTimer() + rl.rate;			
+					
 		}
 	}
 	
@@ -203,41 +246,53 @@ void set_initial_conditions(void)
 	// Mute Audio Amplifier
 	mute_audio();
 
-	// Set Reading Light 1
+
+	/*******************************************/
+	/************** READING LIGHTS *************/
+	// Set Reading Light 1 address
 	readingLight1.address = CH7_BASE;
 	readingLight1.device = PCA1;
 
-	// Set Reading Light 2
+	// Set Reading Light 2 address
 	readingLight2.address = CH8_BASE;
 	readingLight2.device = PCA1;
 	
 	// Default Reading Light Intensity
 	readingLight.intensity = RL_DEFAULT_MAX;
 	
+	// Inititialize Reading Light(s) to start from 0
+	readingLight1.pwmRaw = 0;
+	readingLight2.pwmRaw = 10;
+	
+	// Set to fade on
+	readingLight1.inc_dec = INC;
+	readingLight1.rate = DIMMING_RATE;
+	readingLight1.dim = OFF;
+	readingLight2.inc_dec = DEC;
+	readingLight2.rate = DIMMING_RATE;
+	readingLight2.dim = OFF;
 		
-	/*******************************************/
-	/*REVISIT THIS CONFIGURATION 
-		
-	// Set Reading Light state and turn on 
+	// Read uSW and set reading light state and target
 	if (bcm2835_gpio_lev(NEU_USW))
 	{
 		readingLight.mode = RL2;
-		readingLight1.pwmRaw = 0;
-		readingLight2.pwmRaw = readingLight.intensity;
+		readingLight1.pwmTarget = 0;
+		readingLight2.pwmTarget = readingLight.intensity;
 	}
 	else
 	{
 		readingLight.mode = RL1;
-		readingLight1.pwmRaw = readingLight.intensity;
-		readingLight2.pwmRaw = 0;
-	}*/
-	readingLight.mode = RL2;
+		readingLight1.pwmTarget = readingLight.intensity;
+		readingLight2.pwmTarget = 0;
+	}
 	
-	/*******************************************/
-		
+	printf("RL.mode: %d\n", readingLight.mode);
+	
 	// Trigger to turn on reading light by default
 	readingLight.next_state = 1;
 	readingLight.prev_state = 0;
+	
+	/*******************************************/
 	
 	// Clear CAP_RL_BTN states
 	cap_rl_btn.next_state = 0;
@@ -256,18 +311,6 @@ void set_initial_conditions(void)
 	
 	//***********************************/
 	
-	// Inititialize Reading Light
-	//readingLight.mode = RL1;
-	//readingLight1.pwmRaw = readingLight.intensity;
-	readingLight1.pwmRaw = 0;
-	readingLight2.pwmRaw = 0;
-	
-	readingLight1.inc_dec = INC;
-	readingLight1. rate = DIMMING_RATE;
-	readingLight2.inc_dec = INC;
-	readingLight2.rate = DIMMING_RATE;
-	//readingLight2 = dimStart(readingLight2, readingLight, 1000);
-
 	// Set Cap TTL Light
 	capTTLLight.state = OFF;
 	capTTLLight.pwmRaw = CAP_LIGHT_DEFAULT;
@@ -396,59 +439,8 @@ void write_RGBlighting_feature(struct ledRGBFeature feature)
 }
 
 
-void svc_readingLight(void)
-{
-	// Detect state change
-	if (readingLight.next_state != readingLight.prev_state)
-	{
-		// If next_state is ON
-		if (readingLight.next_state)
-		{
-			printf("RL ON \n");
-			if (readingLight.mode == RL1)
-			{
-				readingLight1.pwmTarget = readingLight.intensity;
-				readingLight1.inc_dec = INC;
-				readingLight2.pwmTarget = 0;
-				readingLight2.inc_dec = DEC;
-			}
-			else
-			{
-				readingLight1.pwmTarget = 0;
-				readingLight1.inc_dec = DEC;
-				readingLight2.pwmTarget = readingLight.intensity;
-				readingLight2.inc_dec = INC;
-			}
-		}
-		// If next_state is OFF
-		else
-		{
-			printf("RL OFF \n");
-
-			readingLight1.pwmTarget = 0;
-			readingLight1.inc_dec = DEC;
-			readingLight2.pwmTarget = 0;
-			readingLight2.inc_dec = DEC;
-		}
-		
-		readingLight1.dim = ON;
-		readingLight2.dim = ON;
-		
-		readingLight1 = dimStart(readingLight1, readingLight, readingLight1.pwmTarget);
-		readingLight2 = dimStart(readingLight2, readingLight, readingLight2.pwmTarget);
-		
-		// Update state transition
-		readingLight.prev_state = readingLight.next_state;
-		
-	}
-}
-
-
-
 uint64_t getTimer(void)
 {
-	//uint64_t data = bcm2835_st_read();
-	//printf("Timer 1: %d" PRIu64 "\n", bcm2835_st_read());
 	return bcm2835_st_read();
 }
 
@@ -468,26 +460,33 @@ void svc_NEU_usw(void)
 			printf("NEU\n");
 			// Adjust state values even when RL is OFF
 			readingLight.mode = RL2;
-			readingLight1.pwmRaw = 0;
-			readingLight2.pwmRaw = readingLight.intensity;
+			readingLight1.pwmTarget = 0;
+			readingLight1.inc_dec = DEC;
+			readingLight2.pwmTarget = readingLight.intensity;
+			readingLight2.inc_dec = INC;
 		}
 		// Change to use .state - don't pull lev twice...
 		else if (!bcm2835_gpio_lev(NEU_USW) & readingLight.mode == RL2)
 		{
 			printf("/NEU\n");
 			readingLight.mode = RL1;
-			readingLight1.pwmRaw = readingLight.intensity;
-			readingLight2.pwmRaw = 0;
+			readingLight1.pwmTarget = readingLight.intensity;
+			readingLight1.inc_dec = INC;
+			readingLight2.pwmTarget = 0;
+			readingLight2.inc_dec = DEC;
 		}
 
 		// REPLACE WITH FADE ROUTINE ******************
 		// Write only if RL is turned ON
-		if (readingLight.next_state == ON)
+		/*if (readingLight.next_state == ON)
 		{
 			write_lighting_feature(readingLight1);
 			write_lighting_feature(readingLight2);
-		}
+		}*/
 		// ********************************************
+		
+		readingLight1 = dimStart(readingLight1, readingLight, readingLight1.pwmTarget);
+		readingLight2 = dimStart(readingLight2, readingLight, readingLight2.pwmTarget);
 		
 		// Update prev_state
 		neu_usw.prev_state = neu_usw.next_state;
